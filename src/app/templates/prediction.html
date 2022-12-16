@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}
+Модель: ...
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<img src={{ url_for('plot_png') }} width=500px>
+<form method="POST" action={{ url_for('get_predict') }} enctype="multipart/form-data" class="form-contact">
+    {{ form.csrf_token }}
+    <p>
+        {{ form.test_data.label}}
+        {{ form.test_data(class_="my_class") }}
+        {% for error in form.test_data.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <center><p> {{ form.submit(class_="my_class") }} </p></center>
+</form>
+{% endblock %}

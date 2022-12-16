@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}
+О себе
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<img src="{{ url_for('static', filename='img/rrr.jpg') }}" width=350px>
+<center>РРРРР!!!!</center>
+{% endblock %}

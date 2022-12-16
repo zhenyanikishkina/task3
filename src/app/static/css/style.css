@@ -1,0 +1,87 @@
+html, body {
+    font-family: 'Arial';
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    /* color: #fff; */
+}
+
+body {
+    background: url("../img/hearts.jpeg");
+}
+
+a {
+    color: #0059b2;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #cc0000;
+    text-decoration: underline;
+}
+
+.clear {clear: both;}
+
+ul.mainmenu {
+    list-style: none;
+    background-color: #debcd7;
+    height: 60px;
+    margin: 0;
+    padding: 0;
+    color: #c41395;
+    font-size: 20px;
+    overflow: hidden;
+    text-align: center;
+}
+
+div.title {
+    text-align: center;
+}
+
+ul.mainmenu li {
+    /* float: left; */
+    display: inline-block;
+    margin: 18px 40px 0 50px;
+}
+ul.mainmenu li.last {float: right;}
+
+/* ! */
+ul.mainmenu li a {
+    color: #c41395;
+    text-decoration: none;
+}
+/* ! */
+ul.mainmenu li a:hover {
+    color: #7f11c7;
+}
+
+div.content {
+    width: 650px;
+    margin: 20px auto 0 auto;
+    box-shadow: 5px 5px 10px #aaa;
+    padding: 20px;
+    background-color: #e6deed;
+}
+
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.flash {padding: 10px}
+.flash.success {
+    border: 1px solid #6008e5;
+}
+
+.form-contact label {
+    font-size: 20px;
+    display: inline-block;
+    min-width: 250px;
+}
+
+.my_class {
+    font-size: 18px;
+    background-color: #ffede1;
+}
