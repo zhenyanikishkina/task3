@@ -18,6 +18,10 @@ class RandomForestMSE:
         feature_subsample_size : float
             The size of feature set for each tree. If None then use one-third of all features.
         """
+        if 'random_state' in trees_parameters:
+            self.random_state = trees_parameters['random_state']
+        else:
+            self.random_state = 137
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.feature_subsample_size = feature_subsample_size
@@ -49,17 +53,18 @@ class RandomForestMSE:
             self.feature_subsample_size
 
         start = time.time()
+        r = np.random.RandomState(self.random_state)
         for i in range(self.n_estimators):
-            ind = np.random.choice(y.shape[0], y.shape[0])
-            model = DecisionTreeRegressor(max_depth=self.max_depth,
-                                          max_features=feature_subsample_size)
-            model.fit(X[ind], y[ind])
+            ind_row = r.choice(y.shape[0], y.shape[0])
+            id_col = r.choice(X.shape[1], X.shape[1])
+            model = DecisionTreeRegressor(max_features=feature_subsample_size, random_state=self.random_state)
+            model.fit(X[ind_row, id_col], y[ind_row])
             self.models.append(model)
             if trace:
-                y_train += model.predict(X)
+                y_train += model.predict(X[:, id_col])
                 acc_train.append(mean_squared_error(y, y_train / (i + 1), squared=False))
             if X_val is not None:
-                y_val_pred += model.predict(X_val)
+                y_val_pred += model.predict(X_val[:, id_col])
                 acc_val.append(mean_squared_error(y_val, y_val_pred / (i + 1), squared=False))
             time_md.append(time.time() - start)
 
@@ -94,6 +99,10 @@ class GradientBoostingMSE:
         feature_subsample_size : float
             The size of feature set for each tree. If None then use one-third of all features.
         """
+        if 'random_state' in trees_parameters:
+            self.random_state = trees_parameters['random_state']
+        else:
+            self.random_state = 137
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_depth = max_depth
@@ -130,20 +139,22 @@ class GradientBoostingMSE:
         ans_train = pred_train.copy()
 
         start = time.time()
+        r = np.random.RandomState(self.random_state)
         for i in range(self.n_estimators):
-            ind = np.random.choice(y.shape[0], y.shape[0])
+            ind_row = r.choice(y.shape[0], y.shape[0])
+            id_col = r.choice(X.shape[1], X.shape[1])
             model = DecisionTreeRegressor(max_depth=self.max_depth,
-                                          max_features=feature_subsample_size)
-            model.fit(X[ind], (y - ans_train)[ind])
+                                          max_features=feature_subsample_size, random_state=self.random_state)
+            model.fit(X[ind_row, id_col], (y - ans_train)[ind_row])
             self.models.append(model)
-            pred_train = model.predict(X)
+            pred_train = model.predict(X[:, id_col])
             self.weights[i] = minimize_scalar(lambda alpha: mean_squared_error(y,
                                         ans_train + alpha * pred_train, squared=False)).x
             ans_train = ans_train + self.weights[i] * pred_train * self.learning_rate
             if trace:
                 acc_train.append(mean_squared_error(y, ans_train, squared=False))
             if X_val is not None:
-                pred_val = model.predict(X_val)
+                pred_val = model.predict(X_val[:, id_col])
                 ans_val = ans_val + self.weights[i] * pred_val * self.learning_rate
                 acc_val.append(mean_squared_error(y_val, ans_val, squared=False))
             time_md.append(time.time() - start)
