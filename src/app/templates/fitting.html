@@ -9,13 +9,6 @@
 <form method="POST" action={{ url_for('get_gb') if gb else url_for('get_rf')}} enctype="multipart/form-data" class="form-contact">
     {{ form.csrf_token }}
     <p>
-        {{ form.ensemble_type.label}}
-        {{ form.ensemble_type(class_="my_class") }}
-        {% for error in form.ensemble_type.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-    <p>
         {{ form.n_estimators.label }}
         {{ form.n_estimators(class_="my_class") }}
     </p>
@@ -45,6 +38,9 @@
         {{ form.val_data.label() }}
         {{ form.val_data(class_="my_class") }}
     </p>
+    {% for er in errors %}
+        <p class="error">{{er}}</p>
+    {% endfor %}
     <center><p> {{ form.submit(class_="my_class") }} </p></center>
 </form>
 {% endblock %}

@@ -6,20 +6,14 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms.validators import DataRequired, Optional, NumberRange
 
 
-ensembles_types = [
-    ('RandomForest', 'Случайный лес'),
-    ('GradientBoosting', 'Градиентный бустинг')
-]
-
 class FittingForm(FlaskForm):
-    ensemble_type = SelectField('Тип ансамбля', choices=ensembles_types)
     n_estimators = IntegerField('Число деревьев', validators=[DataRequired(),
-                                NumberRange(min=1, max=1000)])
+                                NumberRange(min=1, max=5000)], default=500)
     max_depth = IntegerField('Максимальная глубина', validators=[DataRequired(),
-                             NumberRange(min=1, max=50)])
+                             NumberRange(min=1, max=500)], default=7)
     feature_subsample_size = IntegerField('Число признаков', validators=
                                           [DataRequired(),
-                                          NumberRange(min=1, max=50)])
+                                          NumberRange(min=1, max=10000)], default=10)
     learning_rate = FloatField('Learning rate', default=0.1)
     train_data = FileField('Обучающая выборка', validators=[FileRequired(),
                            FileAllowed(['csv'], 'Допускается только формат .csv')

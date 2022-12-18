@@ -64,6 +64,10 @@ div.content {
     background-color: #e6deed;
 }
 
+.error {
+    color: rgb(145, 5, 64);
+}
+
 img {
     display: block;
     margin-left: auto;
@@ -84,4 +88,8 @@ img {
 .my_class {
     font-size: 18px;
     background-color: #ffede1;
+}
+
+.param_table {
+    padding-top: 20px;
 }

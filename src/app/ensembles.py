@@ -18,10 +18,15 @@ class RandomForestMSE:
         feature_subsample_size : float
             The size of feature set for each tree. If None then use one-third of all features.
         """
+        if 'random_state' in trees_parameters:
+            self.random_state = trees_parameters['random_state']
+        else:
+            self.random_state = 137
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.feature_subsample_size = feature_subsample_size
         self.trees_parameters = trees_parameters
+        self.models = None
 
     def fit(self, X, y, X_val=None, y_val=None, trace=False):
         """
@@ -34,6 +39,7 @@ class RandomForestMSE:
         y_val : numpy ndarray
             Array of size n_val_objects
         """
+
         self.models = []
         if trace:
             acc_train = []
@@ -43,29 +49,31 @@ class RandomForestMSE:
             y_val_pred = np.zeros(y_val.shape[0])
             acc_val = []
 
-        feature_subsample_size = X.shape[1] // 3 if\
+        self.feature_subsample_size = X.shape[1] // 3 if\
             self.feature_subsample_size is None else\
             self.feature_subsample_size
 
+        self.ff_arr = []
         start = time.time()
+        r = np.random.RandomState(self.random_state)
         for i in range(self.n_estimators):
-            ind = np.random.choice(y.shape[0], y.shape[0])
-            model = DecisionTreeRegressor(max_depth=self.max_depth,
-                                          max_features=feature_subsample_size)
-            model.fit(X[ind], y[ind])
+            ind_row = r.choice(y.shape[0], y.shape[0])
+            ind_col = r.choice(X.shape[1], self.feature_subsample_size, replace=False)
+            self.ff_arr.append(ind_col)
+            model = DecisionTreeRegressor(max_depth=self.max_depth, random_state=self.random_state)
+            model.fit(X[ind_row][:, ind_col], y[ind_row])
             self.models.append(model)
             if trace:
-                y_train += model.predict(X)
+                y_train += model.predict(X[:, ind_col])
                 acc_train.append(mean_squared_error(y, y_train / (i + 1), squared=False))
             if X_val is not None:
-                y_val_pred += model.predict(X_val)
+                y_val_pred += model.predict(X_val[:, ind_col])
                 acc_val.append(mean_squared_error(y_val, y_val_pred / (i + 1), squared=False))
             time_md.append(time.time() - start)
 
         if X_val is not None:
             return (acc_train, acc_val, time_md) if trace else acc_val
-        else:
-            return (acc_train, time_md) if trace else None
+        return (acc_train, time_md) if trace else None
 
     def predict(self, X):
         """
@@ -76,7 +84,7 @@ class RandomForestMSE:
         y : numpy ndarray
             Array of size n_objects
         """
-        return np.mean([model.predict(X) for model in self.models], axis=0)
+        return np.mean([self.models[i].predict(X[:, self.ff_arr[i]]) for i in range(len(self.models))], axis=0)
 
 
 class GradientBoostingMSE:
@@ -94,12 +102,18 @@ class GradientBoostingMSE:
         feature_subsample_size : float
             The size of feature set for each tree. If None then use one-third of all features.
         """
+        if 'random_state' in trees_parameters:
+            self.random_state = trees_parameters['random_state']
+        else:
+            self.random_state = 137
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_depth = max_depth
         self.feature_subsample_size = feature_subsample_size
         self.trees_parameters = trees_parameters
-
+        self.mean = None
+        self.weights = None
+        self.models = None
 
     def fit(self, X, y, X_val=None, y_val=None, trace=False):
         """
@@ -120,36 +134,38 @@ class GradientBoostingMSE:
             pred_val = np.zeros(y_val.shape[0]) + np.mean(y_val)
             ans_val = pred_val.copy()
 
-        feature_subsample_size = X.shape[1] // 3 if\
+        self.feature_subsample_size = X.shape[1] // 3 if\
             self.feature_subsample_size is None else\
             self.feature_subsample_size
 
         pred_train = np.zeros(y.shape[0]) + self.mean
         ans_train = pred_train.copy()
 
+        self.ff_arr = []
         start = time.time()
+        r = np.random.RandomState(self.random_state)
         for i in range(self.n_estimators):
-            ind = np.random.choice(y.shape[0], y.shape[0])
-            model = DecisionTreeRegressor(max_depth=self.max_depth,
-                                          max_features=feature_subsample_size)
-            model.fit(X[ind], (y - ans_train)[ind])
+            ind_row = r.choice(y.shape[0], y.shape[0])
+            ind_col = r.choice(X.shape[1], self.feature_subsample_size, replace=False)
+            self.ff_arr.append(ind_col)
+            model = DecisionTreeRegressor(max_depth=self.max_depth, random_state=self.random_state)
+            model.fit(X[ind_row][:, ind_col], (y - ans_train)[ind_row])
             self.models.append(model)
-            pred_train = model.predict(X)
+            pred_train = model.predict(X[:, ind_col])
             self.weights[i] = minimize_scalar(lambda alpha: mean_squared_error(y,
                                         ans_train + alpha * pred_train, squared=False)).x
             ans_train = ans_train + self.weights[i] * pred_train * self.learning_rate
             if trace:
                 acc_train.append(mean_squared_error(y, ans_train, squared=False))
             if X_val is not None:
-                pred_val = model.predict(X_val)
+                pred_val = model.predict(X_val[:, ind_col])
                 ans_val = ans_val + self.weights[i] * pred_val * self.learning_rate
                 acc_val.append(mean_squared_error(y_val, ans_val, squared=False))
             time_md.append(time.time() - start)
 
         if X_val is not None:
             return (acc_train, acc_val, time_md) if trace else acc_val
-        else:
-            return (acc_train, time_md) if trace else None
+        return (acc_train, time_md) if trace else None
 
     def predict(self, X):
         """
@@ -161,5 +177,5 @@ class GradientBoostingMSE:
             Array of size n_objects
         """
         pred = self.mean + np.zeros(X.shape[0])
-        return pred + (np.array([model.predict(X) for model in self.models])\
-                                * self.weights.reshape(-1, 1)).sum(axis=0) * self.lr
+        return pred + (np.array([self.models[i].predict(X[:, self.ff_arr[i]]) for i in range(len(self.models))])\
+                                * self.weights.reshape(-1, 1)).sum(axis=0) * self.learning_rate
