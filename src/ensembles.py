@@ -1,4 +1,3 @@
-
 import numpy as np
 import time
 from scipy.optimize import minimize_scalar
@@ -54,11 +53,13 @@ class RandomForestMSE:
             self.feature_subsample_size is None else\
             self.feature_subsample_size
 
+        self.ff_arr = []
         start = time.time()
         r = np.random.RandomState(self.random_state)
         for i in range(self.n_estimators):
             ind_row = r.choice(y.shape[0], y.shape[0])
             ind_col = r.choice(X.shape[1], self.feature_subsample_size, replace=False)
+            self.ff_arr.append(ind_col)
             model = DecisionTreeRegressor(max_depth=self.max_depth, random_state=self.random_state)
             model.fit(X[ind_row][:, ind_col], y[ind_row])
             self.models.append(model)
@@ -83,7 +84,7 @@ class RandomForestMSE:
         y : numpy ndarray
             Array of size n_objects
         """
-        return np.mean([model.predict(X) for model in self.models], axis=0)
+        return np.mean([self.models[i].predict(X[:, self.ff_arr[i]]) for i in range(len(self.models))], axis=0)
 
 
 class GradientBoostingMSE:
@@ -140,11 +141,13 @@ class GradientBoostingMSE:
         pred_train = np.zeros(y.shape[0]) + self.mean
         ans_train = pred_train.copy()
 
+        self.ff_arr = []
         start = time.time()
         r = np.random.RandomState(self.random_state)
         for i in range(self.n_estimators):
             ind_row = r.choice(y.shape[0], y.shape[0])
             ind_col = r.choice(X.shape[1], self.feature_subsample_size, replace=False)
+            self.ff_arr.append(ind_col)
             model = DecisionTreeRegressor(max_depth=self.max_depth, random_state=self.random_state)
             model.fit(X[ind_row][:, ind_col], (y - ans_train)[ind_row])
             self.models.append(model)
@@ -174,5 +177,5 @@ class GradientBoostingMSE:
             Array of size n_objects
         """
         pred = self.mean + np.zeros(X.shape[0])
-        return pred + (np.array([model.predict(X) for model in self.models])\
-                                * self.weights.reshape(-1, 1)).sum(axis=0) * self.lr
+        return pred + (np.array([self.models[i].predict(X[:, self.ff_arr[i]]) for i in range(len(self.models))])\
+                                * self.weights.reshape(-1, 1)).sum(axis=0) * self.learning_rate
