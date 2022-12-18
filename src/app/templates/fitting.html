@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+Случайный лес
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<form method="POST" action={{ url_for('get_gb') if gb else url_for('get_rf')}} enctype="multipart/form-data" class="form-contact">
+    {{ form.csrf_token }}
+    <p>
+        {{ form.n_estimators.label }}
+        {{ form.n_estimators(class_="my_class") }}
+    </p>
+    <p>
+        {{ form.max_depth.label }}
+        {{ form.max_depth(class_="my_class") }}
+    </p>
+    <p>
+        {{ form.feature_subsample_size.label }}
+        {{ form.feature_subsample_size(class_="my_class") }}
+    </p>
+    {% if gb %}
+        <p>
+            {{ form.learning_rate.label }}
+            {{ form.learning_rate(class_="my_class") }}
+        </p>
+    {% endif %}
+    <p>
+        {{ form.train_data.label }}
+        {{ form.train_data(class_="my_class") }}
+    </p>
+    <p>
+        {{ form.target_name.label }}
+        {{ form.target_name(class_="my_class") }}
+    </p>
+    <p>
+        {{ form.val_data.label() }}
+        {{ form.val_data(class_="my_class") }}
+    </p>
+    {% for er in errors %}
+        <p class="error">{{er}}</p>
+    {% endfor %}
+    <center><p> {{ form.submit(class_="my_class") }} </p></center>
+</form>
+{% endblock %}
