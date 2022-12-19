@@ -1,5 +1,5 @@
-import numpy as np
 import time
+import numpy as np
 from scipy.optimize import minimize_scalar
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error
@@ -27,6 +27,7 @@ class RandomForestMSE:
         self.feature_subsample_size = feature_subsample_size
         self.trees_parameters = trees_parameters
         self.models = None
+        self.ff_arr = None
 
     def fit(self, X, y, X_val=None, y_val=None, trace=False):
         """
@@ -114,6 +115,7 @@ class GradientBoostingMSE:
         self.mean = None
         self.weights = None
         self.models = None
+        self.ff_arr = None
 
     def fit(self, X, y, X_val=None, y_val=None, trace=False):
         """
@@ -153,7 +155,7 @@ class GradientBoostingMSE:
             self.models.append(model)
             pred_train = model.predict(X[:, ind_col])
             self.weights[i] = minimize_scalar(lambda alpha: mean_squared_error(y,
-                                        ans_train + alpha * pred_train, squared=False)).x
+                                              ans_train + alpha * pred_train, squared=False)).x
             ans_train = ans_train + self.weights[i] * pred_train * self.learning_rate
             if trace:
                 acc_train.append(mean_squared_error(y, ans_train, squared=False))
@@ -177,5 +179,6 @@ class GradientBoostingMSE:
             Array of size n_objects
         """
         pred = self.mean + np.zeros(X.shape[0])
-        return pred + (np.array([self.models[i].predict(X[:, self.ff_arr[i]]) for i in range(len(self.models))])\
-                                * self.weights.reshape(-1, 1)).sum(axis=0) * self.learning_rate
+        return pred + (np.array([self.models[i].predict(X[:, self.ff_arr[i]])
+                       for i in range(len(self.models))])
+                       * self.weights.reshape(-1, 1)).sum(axis=0) * self.learning_rate

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo docker build -t ensemble_server ../
+docker build -t ensemble_server .

@@ -24,7 +24,7 @@ Session = {}
 @app.route('/')
 @app.route('/index')
 def get_index():
-    return render_template('index.html', menu=menu)
+    return render_template('index.html', menu=menu, title='Веб-сервер: ансамбли алгоритмов')
 
 @app.route('/plot')
 def plot_png():
@@ -183,7 +183,7 @@ def get_gb():
 
 @app.route('/about_me')
 def get_about():
-    return render_template('about_me.html', menu=menu, title='Тебе крышка')
+    return render_template('about_me.html', menu=menu, title='Обо мне')
 
 @app.route('/prediction', methods=['GET', 'POST'])
 def get_predict():
@@ -206,7 +206,7 @@ def get_predict():
         max_depth = Session['model_params']['max_depth']
         feature_subsampling = Session['model_params']['feature_subsampling']
         learning_rate = 0.1
-        if 'learning_rate' in Session:
+        if 'learning_rate' in Session['model_params']:
             learning_rate = Session['model_params']['learning_rate']
 
         if Session['model_train'] == None:
@@ -260,4 +260,8 @@ def get_predict():
 
     except Exception as exc:
         app.logger.info('Exception: {0}'.format(exc))
-        return redirect(url_for('get_predict'))
+        errors.append('Число указанных признаков больше, чем признаков в даннх или learning_rate слишком большой!')
+        if Session['model_type'] == 'Градиентный бустинг':
+            return redirect(url_for('get_gb'))
+        else:
+            return redirect(url_for('get_rf'))
