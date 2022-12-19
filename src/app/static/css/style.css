@@ -57,6 +57,7 @@ ul.mainmenu li a:hover {
 }
 
 div.content {
+    color: #6401a6;
     width: 650px;
     margin: 20px auto 0 auto;
     box-shadow: 5px 5px 10px #aaa;
